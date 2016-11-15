@@ -8,10 +8,17 @@ interface IRelaypin {
     name?: string;
     tags?: string[];
     status?: Tswitc
-    cmdopen?: () => Promise<true>;
-    cmdclose?: () => Promise<true>;
+    cmdopen?: () => Promise<ISwitchAnswer>;
+    cmdclose?: () => Promise<ISwitchAnswer>;
+    serial?: false | string;
 }
 
+interface ISwitchAnswer {
+    pin: number;
+    name?: string;
+    serial?: string;
+    status: string;
+}
 
 import * as child_process from 'child_process'
 
@@ -25,12 +32,13 @@ export default class Relaypin implements IRelaypin {
     pin: number
     name?: string;
     tags: string[] = [];
-    status: Tswitc
-    cmdopen: () => Promise<true>
-    cmdclose: () => Promise<true>
-    switches: Function[]
-    onopen: Function[]
-    onclose: Function[]
+    status: Tswitc;
+    cmdopen: () => Promise<ISwitchAnswer>;
+    cmdclose: () => Promise<ISwitchAnswer>;
+    switches: Function[];
+    onopen: Function[];
+    onclose: Function[];
+    serial: false | string;
     constructor(confpin: IRelaypin) {
 
         if (!confpin.pin) {
@@ -38,17 +46,23 @@ export default class Relaypin implements IRelaypin {
         } else {
             const that = this
             that.pin = confpin.pin
+            if (confpin.name) that.name = confpin.name
+            if (confpin.serial) {
+                that.serial = confpin.serial
+            } else {
+                that.serial = false
+            }
+            if (confpin.status) {
+                that.status = confpin.status
+            } else {
+                that.status = that.normally
+            }
             if (confpin.normally) {
                 that.normally = confpin.normally
             } else {
                 that.normally = "open" // default normally
             }
-            if (confpin.status) {
-                that.status
-            } else {
-                that.status = that.normally
-            }
-            if (confpin.name) that.name = confpin.name
+
             if (confpin.tags) {
                 for (let i = 0; i < confpin.tags.length; i++) {
                     that.tags.push(confpin.tags[i])
@@ -58,13 +72,19 @@ export default class Relaypin implements IRelaypin {
                 that.cmdopen = confpin.cmdopen
             } else {
                 that.cmdopen = function () {
-                    return new Promise<true>(function (resolve, reject) {
+                    return new Promise<ISwitchAnswer>(function (resolve, reject) {
                         exec('echo 1 > /sys/class/gpio/gpio' + that.pin + '/value', function (err, stout, stderr) {
                             if (err) {
                                 reject(err)
                             } else {
-                                status = 'open'
-                                resolve(true)
+                                that.status = 'open'
+                                const a: ISwitchAnswer = {
+                                    status: that.status,
+                                    pin: that.pin
+                                }
+                                if (that.serial) a.serial = that.serial
+                                if (that.name) a.name = that.name
+                                resolve(a)
                             }
                         })
                     })
@@ -74,13 +94,19 @@ export default class Relaypin implements IRelaypin {
                 that.cmdclose = confpin.cmdclose
             } else {
                 that.cmdclose = function () {
-                    return new Promise<true>(function (resolve, reject) {
+                    return new Promise<ISwitchAnswer>(function (resolve, reject) {
                         exec('echo 0 > /sys/class/gpio/gpio' + that.pin + '/value', function (err, stout, stderr) {
                             if (err) {
                                 reject(err)
                             } else {
-                                status = 'closed'
-                                resolve(true)
+                                that.status = 'close'
+                                const a: ISwitchAnswer = {
+                                    status: that.status,
+                                    pin: that.pin
+                                }
+                                if (that.serial) a.serial = that.serial
+                                if (that.name) a.name = that.name
+                                resolve(a)
                             }
                         })
                     })
@@ -93,38 +119,48 @@ export default class Relaypin implements IRelaypin {
 
     switch() {
         const that = this
-        return new Promise<true>(function (resolve, reject) {
+        return new Promise<ISwitchAnswer>(function (resolve, reject) {
             if (that.status) {
-                that.switchclose()
+                that.switchclose().then(function (a) {
+                    resolve(a)
+                }).catch(function (err) {
+                    reject(err)
+                })
             } else {
-                that.switchopen()
+                that.switchopen().then(function (a) {
+                    resolve(a)
+                }).catch(function (err) {
+                    reject(err)
+                })
             }
         })
     }
     switchopen() {
         const that = this
-        return new Promise<true>(function (resolve, reject) {
+        return new Promise<ISwitchAnswer>(function (resolve, reject) {
             if (that.status === 'close') {
-                that.cmdopen().then(function () {
+                that.cmdopen().then(function (a) {
                     for (let i = 0; i < that.onopen.length; i++) {
                         that.onopen[i]
+                        resolve(a)
                     }
                 }).catch(function (err) {
-                    console.log(err)
+                    reject(err)
                 })
             }
         })
     }
     switchclose() {
         const that = this
-        return new Promise<true>(function (resolve, reject) {
+        return new Promise<ISwitchAnswer>(function (resolve, reject) {
             if (that.status === 'close') {
-                that.cmdclose().then(function () {
+                that.cmdclose().then(function (a) {
                     for (let i = 0; i < that.onclose.length; i++) {
                         that.onclose[i]
+                        resolve(a)
                     }
                 }).catch(function (err) {
-                    console.log(err)
+                    reject(err)
                 })
             }
         })
