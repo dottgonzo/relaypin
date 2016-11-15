@@ -16,6 +16,7 @@ interface IRelaypin {
 interface ISwitchAnswer {
     name?: string;
     serial?: string;
+    pin?: number;
     status: string;
 }
 
@@ -80,6 +81,8 @@ export default class Relaypin implements IRelaypin {
                                 }
                                 if (that.serial) a.serial = that.serial
                                 if (that.name) a.name = that.name
+                                if (that.pin) a.pin = that.pin
+
                                 resolve(a)
                             }
                         })
@@ -101,6 +104,7 @@ export default class Relaypin implements IRelaypin {
                                 }
                                 if (that.serial) a.serial = that.serial
                                 if (that.name) a.name = that.name
+                                if (that.pin) a.pin = that.pin
                                 resolve(a)
                             }
                         })
