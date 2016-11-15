@@ -32,7 +32,7 @@ export default class Relaypin implements IRelaypin {
     status: Tswitc;
     cmdopen: () => Promise<ISwitchAnswer>;
     cmdclose: () => Promise<ISwitchAnswer>;
-    switches: Function[];
+    onswitch: Function[];
     onopen: Function[];
     onclose: Function[];
     serial: false | string;
@@ -116,12 +116,18 @@ export default class Relaypin implements IRelaypin {
         return new Promise<ISwitchAnswer>(function (resolve, reject) {
             if (that.status) {
                 that.switchclose().then(function (a) {
+                    for (let i = 0; i < that.onswitch.length; i++) {
+                        that.onswitch[i]
+                    }
                     resolve(a)
                 }).catch(function (err) {
                     reject(err)
                 })
             } else {
                 that.switchopen().then(function (a) {
+                    for (let i = 0; i < that.onswitch.length; i++) {
+                        that.onswitch[i]
+                    }
                     resolve(a)
                 }).catch(function (err) {
                     reject(err)
@@ -136,8 +142,8 @@ export default class Relaypin implements IRelaypin {
                 that.cmdopen().then(function (a) {
                     for (let i = 0; i < that.onopen.length; i++) {
                         that.onopen[i]
-                        resolve(a)
                     }
+                    resolve(a)
                 }).catch(function (err) {
                     reject(err)
                 })
@@ -151,8 +157,8 @@ export default class Relaypin implements IRelaypin {
                 that.cmdclose().then(function (a) {
                     for (let i = 0; i < that.onclose.length; i++) {
                         that.onclose[i]
-                        resolve(a)
                     }
+                    resolve(a)
                 }).catch(function (err) {
                     reject(err)
                 })
@@ -167,7 +173,7 @@ export default class Relaypin implements IRelaypin {
                 this.onopen.push(cmd)
 
             } else if (value === 'switch') {
-                this.switches.push(cmd)
+                this.onswitch.push(cmd)
 
             } else {
                 throw Error("no pin number provided")

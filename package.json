@@ -1,6 +1,6 @@
 {
   "name": "relaypin",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "pin gpio relay mapper",
   "main": "index.js",
   "dependencies": {
