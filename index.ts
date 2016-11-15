@@ -7,14 +7,13 @@ interface IRelaypin {
     pin: number;
     name?: string;
     tags?: string[];
-    status?: Tswitc
+    status?: Tswitc;
     cmdopen?: () => Promise<ISwitchAnswer>;
     cmdclose?: () => Promise<ISwitchAnswer>;
     serial?: false | string;
 }
 
 interface ISwitchAnswer {
-    pin: number;
     name?: string;
     serial?: string;
     status: string;
@@ -23,13 +22,11 @@ interface ISwitchAnswer {
 import * as child_process from 'child_process'
 
 import * as Promise from 'bluebird'
-
-
 const exec = child_process.exec
 
 export default class Relaypin implements IRelaypin {
-    normally: Tswitc
-    pin: number
+    normally: Tswitc;
+    pin: number;
     name?: string;
     tags: string[] = [];
     status: Tswitc;
@@ -41,11 +38,11 @@ export default class Relaypin implements IRelaypin {
     serial: false | string;
     constructor(confpin: IRelaypin) {
 
-        if (!confpin.pin) {
+        if (!confpin.pin || (confpin.cmdopen && confpin.cmdclose)) {
             throw Error("no pin number provided")
         } else {
             const that = this
-            that.pin = confpin.pin
+            if (confpin.pin) that.pin = confpin.pin
             if (confpin.name) that.name = confpin.name
             if (confpin.serial) {
                 that.serial = confpin.serial
@@ -79,8 +76,7 @@ export default class Relaypin implements IRelaypin {
                             } else {
                                 that.status = 'open'
                                 const a: ISwitchAnswer = {
-                                    status: that.status,
-                                    pin: that.pin
+                                    status: that.status
                                 }
                                 if (that.serial) a.serial = that.serial
                                 if (that.name) a.name = that.name
@@ -101,8 +97,7 @@ export default class Relaypin implements IRelaypin {
                             } else {
                                 that.status = 'close'
                                 const a: ISwitchAnswer = {
-                                    status: that.status,
-                                    pin: that.pin
+                                    status: that.status
                                 }
                                 if (that.serial) a.serial = that.serial
                                 if (that.name) a.name = that.name
