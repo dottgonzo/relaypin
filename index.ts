@@ -1,13 +1,13 @@
 
-type TswitchAll = "open" | "close" | "switch";
-type Tswitc = "open" | "close";
+type TswitchhAll = "open" | "close" | "switch";
+type Tswitch = "open" | "close";
 
 interface IRelaypin {
-    normally?: Tswitc;
+    normally?: Tswitch;
     pin: number;
     name?: string;
     tags?: string[];
-    status?: Tswitc;
+    status?: Tswitch;
     cmdopen?: () => Promise<ISwitchAnswer>;
     cmdclose?: () => Promise<ISwitchAnswer>;
     serial?: false | string;
@@ -25,11 +25,11 @@ import * as Promise from 'bluebird'
 const exec = child_process.exec
 
 export default class Relaypin implements IRelaypin {
-    normally: Tswitc;
+    normally: Tswitch;
     pin: number;
     name?: string;
     tags: string[] = [];
-    status: Tswitc;
+    status: Tswitch;
     cmdopen: () => Promise<ISwitchAnswer>;
     cmdclose: () => Promise<ISwitchAnswer>;
     onswitch: Function[];
@@ -165,7 +165,7 @@ export default class Relaypin implements IRelaypin {
             }
         })
     }
-    on(value: TswitchAll, cmd: Function) {
+    on(value: TswitchhAll, cmd: Function) {
         if (cmd) {
             if (value === 'close') {
                 this.onclose.push(cmd)
