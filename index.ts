@@ -107,7 +107,6 @@ export default class Relaypin implements IRelaypin {
                     })
                 }
             }
-
         }
     }
 
