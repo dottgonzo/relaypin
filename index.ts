@@ -3,11 +3,13 @@ type TswitchAll = "open" | "close" | "switch";
 type Tswitc = "open" | "close";
 
 interface IRelaypin {
-    normally?: Tswitc
-    pin: number
+    normally?: Tswitc;
+    pin: number;
+    name?: string;
+    tags?: string[];
     status?: Tswitc
-    cmdopen?: () => Promise<true>
-    cmdclose?: () => Promise<true>
+    cmdopen?: () => Promise<true>;
+    cmdclose?: () => Promise<true>;
 }
 
 
@@ -21,6 +23,8 @@ const exec = child_process.exec
 export default class Relaypin implements IRelaypin {
     normally: Tswitc
     pin: number
+    name?: string;
+    tags: string[] = [];
     status: Tswitc
     cmdopen: () => Promise<true>
     cmdclose: () => Promise<true>
@@ -44,12 +48,18 @@ export default class Relaypin implements IRelaypin {
             } else {
                 that.status = that.normally
             }
+            if (confpin.name) that.name = confpin.name
+            if (confpin.tags) {
+                for (let i = 0; i < confpin.tags.length; i++) {
+                    that.tags.push(confpin.tags[i])
+                }
+            }
             if (confpin.cmdopen) {
                 that.cmdopen = confpin.cmdopen
             } else {
-                that.cmdopen = function() {
-                    return new Promise<true>(function(resolve, reject) {
-                        exec('echo 1 > /sys/class/gpio/gpio' + that.pin + '/value', function(err, stout, stderr) {
+                that.cmdopen = function () {
+                    return new Promise<true>(function (resolve, reject) {
+                        exec('echo 1 > /sys/class/gpio/gpio' + that.pin + '/value', function (err, stout, stderr) {
                             if (err) {
                                 reject(err)
                             } else {
@@ -63,9 +73,9 @@ export default class Relaypin implements IRelaypin {
             if (confpin.cmdclose) {
                 that.cmdclose = confpin.cmdclose
             } else {
-                that.cmdclose = function() {
-                    return new Promise<true>(function(resolve, reject) {
-                        exec('echo 0 > /sys/class/gpio/gpio' + that.pin + '/value', function(err, stout, stderr) {
+                that.cmdclose = function () {
+                    return new Promise<true>(function (resolve, reject) {
+                        exec('echo 0 > /sys/class/gpio/gpio' + that.pin + '/value', function (err, stout, stderr) {
                             if (err) {
                                 reject(err)
                             } else {
@@ -83,7 +93,7 @@ export default class Relaypin implements IRelaypin {
 
     switch() {
         const that = this
-        return new Promise<true>(function(resolve, reject) {
+        return new Promise<true>(function (resolve, reject) {
             if (that.status) {
                 that.switchclose()
             } else {
@@ -93,13 +103,13 @@ export default class Relaypin implements IRelaypin {
     }
     switchopen() {
         const that = this
-        return new Promise<true>(function(resolve, reject) {
+        return new Promise<true>(function (resolve, reject) {
             if (that.status === 'close') {
-                that.cmdopen().then(function() {
+                that.cmdopen().then(function () {
                     for (let i = 0; i < that.onopen.length; i++) {
                         that.onopen[i]
                     }
-                }).catch(function(err) {
+                }).catch(function (err) {
                     console.log(err)
                 })
             }
@@ -107,13 +117,13 @@ export default class Relaypin implements IRelaypin {
     }
     switchclose() {
         const that = this
-        return new Promise<true>(function(resolve, reject) {
+        return new Promise<true>(function (resolve, reject) {
             if (that.status === 'close') {
-                that.cmdclose().then(function() {
+                that.cmdclose().then(function () {
                     for (let i = 0; i < that.onclose.length; i++) {
                         that.onclose[i]
                     }
-                }).catch(function(err) {
+                }).catch(function (err) {
                     console.log(err)
                 })
             }
